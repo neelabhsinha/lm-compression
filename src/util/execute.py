@@ -17,7 +17,7 @@ def execute(model_name, decoding_strategy, dataset_name, batch_size, sink_tokens
     decoding_strategy = DecodingStrategy[decoding_strategy.upper()]
     rouge_scorer = RougeScore()
     results_path = f'{model_name}_{dataset_name}_{decoding_strategy.name.lower()}_{str(sink_tokens)}_{str(compression_window)}'
-    results_path.replace('/', '--')
+    results_path = results_path.replace('/', '--')
     results = {'input': [], 'output': [], 'target': [], 'rouge1': [], 'rouge2': [], 'rougeL': []}
     pbar = tqdm(data_loader, total=len(data_loader), desc=f'Generating results')
     for i, batch in enumerate(pbar):
