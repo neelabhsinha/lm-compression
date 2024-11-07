@@ -30,9 +30,9 @@ def execute(model_name, decoding_strategy, dataset_name, batch_size, sink_tokens
             results['input'].extend(input_text)
             results['output'].extend(outputs)
             results['target'].extend(labels)
-            results['rouge1'].extend(rouge['rouge1'] * 100)
-            results['rouge2'].extend(rouge['rouge2'] * 100)
-            results['rougeL'].extend(rouge['rougeL'] * 100)
+            results['rouge1'].extend(rouge['rouge1'])
+            results['rouge2'].extend(rouge['rouge2'])
+            results['rougeL'].extend(rouge['rougeL'])
         except RuntimeError or torch.cuda.OutOfMemoryError:
             print('Out of memory error occurred. Skipping this batch.')
         if i > 1:
