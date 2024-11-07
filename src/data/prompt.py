@@ -7,10 +7,20 @@ def cnn_dailymail_map(example):
     return example
 
 
+def eli5_prompt(example):
+    question = example['question']
+    example['input_text'] = f"Answer the question: {question}\nAnswer:"
+    example['target'] = example['answer']
+    del example['question']
+    del example['answer']
+    return example
+
+
 class PromptMap:
     def __init__(self):
         self.map = {
-            'abisee/cnn_dailymail': cnn_dailymail_map
+            'abisee/cnn_dailymail': cnn_dailymail_map,
+            'sentence-transformers/eli5': eli5_prompt
         }
 
     def get_map(self, dataset):

@@ -25,6 +25,7 @@ def get_args():
     parser.add_argument('--device', type=str, default='cpu', help='Device to be used for inference')
     parser.add_argument('--max_length', type=int, default=128, help='Maximum length of the output sequence')
     parser.add_argument('--batch_size', type=int, default=8, help='Batch size for inference')
+    parser.add_argument('--dataset_split', type=str, default='test', help='Dataset split to be used')
 
     return parser.parse_args()
 
@@ -32,5 +33,5 @@ def get_args():
 if __name__ == '__main__':
     configure_huggingface()
     args = get_args()
-    execute(args.model_name, args.decoding_strategy, args.dataset_name, args.batch_size, args.sink_tokens,
+    execute(args.model_name, args.decoding_strategy, args.dataset_name, args.dataset_split, args.batch_size, args.sink_tokens,
             args.compression_window, args.max_length, args.device)
