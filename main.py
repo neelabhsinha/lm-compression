@@ -15,8 +15,7 @@ def configure_huggingface():
 
 def get_args():
     parser = argparse.ArgumentParser(
-        description='Project for evaluating different large language models (LLMs) on various tasks across multiple'
-                    ' domains, categories, and types of reasoning.')
+        description='Project for compressing key-value cache in transformers models for efficient inference')
 
     parser.add_argument('--model_name', type=str, default='gpt2', help='Huggingface model ID to be used')
     parser.add_argument('--decoding_strategy', type=str, default='greedy', help='Decoding strategy to be used')
