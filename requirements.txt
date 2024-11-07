@@ -1,0 +1,12 @@
+numpy
+pandas
+matplotlib
+torch
+transformers
+datasets
+nltk
+rouge-score
+accelerate
+bitsandbytes
+evaluate
+tqdm
