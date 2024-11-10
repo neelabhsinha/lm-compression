@@ -11,11 +11,12 @@ from src.util.results_io import save_results
 
 
 def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_tokens,
-            retention_window_length,
+            initial_local_window, steepness_coefficient,
             skip_prefill_compression, seq_pooling_type, compress_context, max_length, device):
     seq_pooling_type = SequenceCompressionPoolingType[seq_pooling_type.upper()]
     model = LanguageModel(model_name=model_name, sink_tokens=sink_tokens,
-                          retention_window_length=retention_window_length,
+                          initial_local_window=initial_local_window,
+                          steepness_coefficient=steepness_coefficient,
                           skip_prefill_compression=skip_prefill_compression,
                           sequence_pooling_type=seq_pooling_type,
                           device=device)
@@ -25,7 +26,11 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
                     .get_loader(batch_size=batch_size))
     decoding_strategy = DecodingStrategy[decoding_strategy.upper()]
     evaluation_metrics = LongBenchEvaluationMetric()
-    results_path = f'{model_name}__{decoding_strategy.name.lower()}__{str(sink_tokens)}__{str(retention_window_length)}__{"skip_prefill_compression" if skip_prefill_compression else "compress_prefill"}__{seq_pooling_type.name.lower()}__{"context_compress" if compress_context else "no_context_compress"}'
+    results_path = (f'{model_name}__{decoding_strategy.name.lower()}__{str(sink_tokens)}__'
+                    f'{str(initial_local_window)}__{str(steepness_coefficient)}__'
+                    f'{"skip_prefill_compression" if skip_prefill_compression else "compress_prefill"}__'
+                    f'{seq_pooling_type.name.lower()}__'
+                    f'{"context_compress" if compress_context else "no_context_compress"}')
     results_path = results_path.replace('/', '--')
     results = {'dataset': [], 'input': [], 'output': [], 'target': [], 'metric': []}
     total_datasets = len(data_loaders)
@@ -39,7 +44,8 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
             all_classes_batch = batch['all_classes']
             dataset_names = batch['dataset']
             try:
-                response = model.decode(input_batch=input_text, decoding_strategy=decoding_strategy, max_length=max_length)
+                response = model.decode(input_batch=input_text, decoding_strategy=decoding_strategy,
+                                        max_length=max_length)
                 outputs = response
                 labels = batch['target']
                 scores = [evaluation_metrics.get_score(dataset_name, output, label, all_classes) for dataset_name, output, label, all_classes in zip(dataset_names, outputs, labels, all_classes_batch)]

@@ -6,7 +6,7 @@ from src.compression.sequence_kv_compress import SequenceKVCompressor
 
 
 class LanguageModel:
-    def __init__(self, model_name, sink_tokens, retention_window_length, skip_prefill_compression,
+    def __init__(self, model_name, sink_tokens, initial_local_window, steepness_coefficient, skip_prefill_compression,
                  sequence_pooling_type, kv_seq_dim=2, device='cpu'):
         model_loader = HuggingFaceModel(model_name)
         self.model = model_loader.get_model()
@@ -15,10 +15,11 @@ class LanguageModel:
         self.tokenizer = model_loader.get_tokenizer()
         self.tokenizer.padding_side = "left"
         self.sink_tokens = sink_tokens
-        self.retention_window_length = retention_window_length
-        self.skip_prefill_compression = skip_prefill_compression
+        self.steepness_coefficient = steepness_coefficient
+        self.num_transformer_blocks = self.model.config.num_hidden_layers
         self.sequence_kv_compressor = SequenceKVCompressor(sink_tokens, sequence_pooling_type,
-                                                           retention_window_length, skip_prefill_compression,
+                                                           initial_local_window, steepness_coefficient,
+                                                           skip_prefill_compression, self.num_transformer_blocks,
                                                            kv_seq_dim)
 
     @torch.no_grad()
@@ -37,7 +38,7 @@ class LanguageModel:
         batch_size = input_ids.size(0)
         output_tokens = input_ids
         generated_tokens = torch.zeros(batch_size, 0).to(self.model.device)
-        retention_window_start = self.sink_tokens
+        retention_window_start = [self.sink_tokens] * self.num_transformer_blocks
         for decode_step in range(max_length):
             is_prefill = decode_step == 0
             with torch.no_grad():
