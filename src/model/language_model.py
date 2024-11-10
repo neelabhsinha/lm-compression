@@ -2,11 +2,12 @@ import torch
 
 from src.enum.decoding_strategy import DecodingStrategy
 from src.model.huggingface_model import HuggingFaceModel
-from src.util.kv_compressor import compress_kv_cache
+from src.compression.sequence_kv_compress import SequenceKVCompressor
 
 
 class LanguageModel:
-    def __init__(self, model_name, sink_tokens, retention_window_length, skip_prefill_compression, device='cpu'):
+    def __init__(self, model_name, sink_tokens, retention_window_length, skip_prefill_compression,
+                 sequence_pooling_type, kv_seq_dim=2, device='cpu'):
         model_loader = HuggingFaceModel(model_name)
         self.model = model_loader.get_model()
         self.model = self.model.to(device)
@@ -14,6 +15,9 @@ class LanguageModel:
         self.sink_tokens = sink_tokens
         self.retention_window_length = retention_window_length
         self.skip_prefill_compression = skip_prefill_compression
+        self.sequence_kv_compressor = SequenceKVCompressor(sink_tokens, sequence_pooling_type,
+                                                           retention_window_length, skip_prefill_compression,
+                                                           kv_seq_dim)
 
     @torch.no_grad()
     def decode(self, input_batch, decoding_strategy, max_length=100, top_k=None, top_p=None):
@@ -35,10 +39,9 @@ class LanguageModel:
                     out = self.model(input_ids=output_tokens[:, -1:], past_key_values=past_key_values, use_cache=True)
             last_token_logit = out.logits[:, -1, :]
 
-            past_key_values, next_retention_window = compress_kv_cache(out.past_key_values, self.sink_tokens,
-                                                                       self.retention_window_length,
-                                                                       retention_window_start,
-                                                                       self.skip_prefill_compression, prefill=is_prefill)
+            past_key_values, next_retention_window = self.sequence_kv_compressor.compress_kv_cache(out.past_key_values,
+                                                                                                   retention_window_start,
+                                                                                                   prefill=is_prefill)
             retention_window_start = next_retention_window
             if decoding_strategy == DecodingStrategy.GREEDY:
                 next_tokens = self._greedy_decode(last_token_logit)
