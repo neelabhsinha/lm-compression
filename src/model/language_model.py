@@ -6,13 +6,14 @@ from src.util.kv_compressor import compress_kv_cache
 
 
 class LanguageModel:
-    def __init__(self, model_name, sink_tokens, compression_window, device='cpu'):
+    def __init__(self, model_name, sink_tokens, retention_window_length, skip_prefill_compression, device='cpu'):
         model_loader = HuggingFaceModel(model_name)
         self.model = model_loader.get_model()
         self.model = self.model.to(device)
         self.tokenizer = model_loader.get_tokenizer()
         self.sink_tokens = sink_tokens
-        self.compression_window = compression_window
+        self.retention_window_length = retention_window_length
+        self.skip_prefill_compression = skip_prefill_compression
 
     @torch.no_grad()
     def decode(self, input_batch, decoding_strategy, max_length=100, top_k=None, top_p=None):
@@ -24,10 +25,9 @@ class LanguageModel:
         batch_size = input_ids.size(0)
         output_tokens = input_ids
         generated_tokens = torch.zeros(batch_size, 0).to(self.model.device)
+        retention_window_start = self.sink_tokens
         for decode_step in range(max_length):
             is_prefill = decode_step == 0
-            # print('Starting decode step:', decode_step)
-            # print('Token shape - ', output_tokens.shape)
             with torch.no_grad():
                 if is_prefill:
                     out = self.model(input_ids=output_tokens, past_key_values=past_key_values, use_cache=True)
@@ -35,9 +35,11 @@ class LanguageModel:
                     out = self.model(input_ids=output_tokens[:, -1:], past_key_values=past_key_values, use_cache=True)
             last_token_logit = out.logits[:, -1, :]
 
-            past_key_values = compress_kv_cache(out.past_key_values, self.sink_tokens, self.compression_window,
-                                                prefill=is_prefill)
-            # print('Cache shape after compression - ', past_key_values[0][0].shape)
+            past_key_values, next_retention_window = compress_kv_cache(out.past_key_values, self.sink_tokens,
+                                                                       self.retention_window_length,
+                                                                       retention_window_start,
+                                                                       self.skip_prefill_compression, prefill=is_prefill)
+            retention_window_start = next_retention_window
             if decoding_strategy == DecodingStrategy.GREEDY:
                 next_tokens = self._greedy_decode(last_token_logit)
             elif decoding_strategy == DecodingStrategy.TOP_K:

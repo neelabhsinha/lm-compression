@@ -9,14 +9,16 @@ from src.metrics.rouge import RougeScore
 from src.util.results_io import save_results
 
 
-def execute(model_name, decoding_strategy, dataset_name, dataset_split, batch_size, sink_tokens, compression_window, max_length,
-            device):
-    model = LanguageModel(model_name=model_name, sink_tokens=sink_tokens, compression_window=compression_window,
+def execute(model_name, decoding_strategy, dataset_name, dataset_split, batch_size, sink_tokens, retention_window_length,
+            skip_prefill_compression, max_length, device):
+    model = LanguageModel(model_name=model_name, sink_tokens=sink_tokens,
+                          retention_window_length=retention_window_length,
+                          skip_prefill_compression=skip_prefill_compression,
                           device=device)
     data_loader = DatasetLoader(dataset_name, dataset_split).get_loader(batch_size=batch_size)
     decoding_strategy = DecodingStrategy[decoding_strategy.upper()]
     rouge_scorer = RougeScore()
-    results_path = f'{model_name}_{dataset_name}_{decoding_strategy.name.lower()}_{str(sink_tokens)}_{str(compression_window)}'
+    results_path = f'{model_name}_{dataset_name}_{decoding_strategy.name.lower()}_{str(sink_tokens)}_{str(retention_window_length)}_{str(skip_prefill_compression)}'
     results_path = results_path.replace('/', '--')
     results = {'input': [], 'output': [], 'target': [], 'rouge1': [], 'rouge2': [], 'rougeL': []}
     pbar = tqdm(data_loader, total=len(data_loader), desc=f'Generating results')
