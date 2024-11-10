@@ -12,17 +12,20 @@ from src.util.results_io import save_results
 
 def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_tokens,
             retention_window_length,
-            skip_prefill_compression, seq_pooling_type, max_length, device):
+            skip_prefill_compression, seq_pooling_type, compress_context, max_length, device):
     seq_pooling_type = SequenceCompressionPoolingType[seq_pooling_type.upper()]
     model = LanguageModel(model_name=model_name, sink_tokens=sink_tokens,
                           retention_window_length=retention_window_length,
                           skip_prefill_compression=skip_prefill_compression,
                           sequence_pooling_type=seq_pooling_type,
                           device=device)
-    data_loaders = DatasetLoader(dataset_split).get_loader(batch_size=batch_size)
+    tokenizer = model.tokenizer
+    max_context_size = model.max_context_size
+    data_loaders = (DatasetLoader(dataset_split, tokenizer, max_context_size, compress_context)
+                    .get_loader(batch_size=batch_size))
     decoding_strategy = DecodingStrategy[decoding_strategy.upper()]
     evaluation_metrics = LongBenchEvaluationMetric()
-    results_path = f'{model_name}_{decoding_strategy.name.lower()}_{str(sink_tokens)}_{str(retention_window_length)}_{str(skip_prefill_compression)}_{seq_pooling_type.name.lower()}'
+    results_path = f'{model_name}__{decoding_strategy.name.lower()}__{str(sink_tokens)}__{str(retention_window_length)}__{"skip_prefill_compression" if skip_prefill_compression else "compress_prefill"}__{seq_pooling_type.name.lower()}__{"context_compress" if compress_context else "no_context_compress"}'
     results_path = results_path.replace('/', '--')
     results = {'dataset': [], 'input': [], 'output': [], 'target': [], 'metric': []}
     total_datasets = len(data_loaders)

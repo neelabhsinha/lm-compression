@@ -13,13 +13,14 @@ def collate_fn(batch):
 
 
 class DatasetLoader:
-    def __init__(self, dataset_split):
+    def __init__(self, dataset_split, tokenizer, max_context_size, compress_context=False):
         self.dataset_names = ["narrativeqa", "qasper", "multifieldqa_en", "hotpotqa", "2wikimqa", "musique",
                     "gov_report", "qmsum", "multi_news", "trec", "triviaqa", "samsum",
                     "passage_count", "passage_retrieval_en", "lcc", "repobench-p"]
+
         self.data_loaders = None
         self.dataset_split = dataset_split
-        self.prompt_mapper = PromptMap()
+        self.prompt_mapper = PromptMap(tokenizer, compress_context, max_context_size)
         os.makedirs(cache_dir, exist_ok=True)
 
     def load(self, dataset_name=None):

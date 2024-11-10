@@ -1,6 +1,8 @@
+from src.compression.context_compress import ContextCompressor
+
 
 class PromptMap:
-    def __init__(self):
+    def __init__(self, tokenizer, compress_context, max_context_size):
         self.prompts = {
             "narrativeqa": "You are given a story, which can be either a novel or a movie script, and a question. "
                            "Answer the question as concisely as you can, using a single phrase if possible. "
@@ -56,21 +58,26 @@ class PromptMap:
             "lcc": "Please complete the code given below.\n{context}Next line of code:",
             "repobench-p": "Please complete the code given below.\n{context}{input}Next line of code:"
         }
+        self.prompt_compressor = ContextCompressor(tokenizer, max_context_size) if compress_context else None
 
     def get_prompt_function(self, dataset_name):
         template = self.prompts.get(dataset_name)
         if template is None:
             raise ValueError(f"No prompt found for dataset: {dataset_name}")
 
-        def prompt_fn(batch):
-            context = batch.get("context", "")
-            input_text = batch.get("input", "")
+        def prompt_fn(instance):
+            context = instance.get("context", "")
+            dataset = instance.get("dataset", "")
+            compression_direction = "left" if dataset in ["lcc", "repobench-p"] else "right"
+            if self.prompt_compressor is not None:
+                context = self.prompt_compressor.compress(template, context, instance.get("input", ""), compression_direction)
+            input_text = instance.get("input", "")
             prompt_text = template.format(context=context, input=input_text)
-            batch["input_text"] = prompt_text
-            batch["target"] = batch.get("answers", "")
-            del batch["context"]
-            del batch["input"]
-            del batch["answers"]
-            return batch
+            instance["input_text"] = prompt_text
+            instance["target"] = instance.get("answers", "")
+            del instance["context"]
+            del instance["input"]
+            del instance["answers"]
+            return instance
 
         return prompt_fn
