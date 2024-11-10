@@ -13,6 +13,7 @@ class LanguageModel:
         self.max_context_size = self.model.config.max_position_embeddings
         self.model = self.model.to(device)
         self.tokenizer = model_loader.get_tokenizer()
+        self.tokenizer.padding_side = "left"
         self.sink_tokens = sink_tokens
         self.retention_window_length = retention_window_length
         self.skip_prefill_compression = skip_prefill_compression
@@ -28,8 +29,7 @@ class LanguageModel:
             return_tensors="pt",
             padding="max_length",
             truncation=True,
-            max_length=self.max_context_size,
-            padding_side="left"
+            max_length=self.max_context_size
         )
         tokenized_inputs = {k: v.to(self.model.device) for k, v in tokenized_inputs.items()}
         input_ids = tokenized_inputs["input_ids"]
