@@ -10,6 +10,7 @@ class LanguageModel:
                  sequence_pooling_type, kv_seq_dim=2, device='cpu'):
         model_loader = HuggingFaceModel(model_name)
         self.model = model_loader.get_model()
+        self.max_context_size = self.model.config.max_position_embeddings
         self.model = self.model.to(device)
         self.tokenizer = model_loader.get_tokenizer()
         self.sink_tokens = sink_tokens
@@ -22,7 +23,14 @@ class LanguageModel:
     @torch.no_grad()
     def decode(self, input_batch, decoding_strategy, max_length=100, top_k=None, top_p=None):
         self.model.eval()
-        tokenized_inputs = self.tokenizer(input_batch, return_tensors="pt", padding=True, truncation=True)
+        tokenized_inputs = self.tokenizer(
+            input_batch,
+            return_tensors="pt",
+            padding="max_length",
+            truncation=True,
+            max_length=self.max_context_size,
+            padding_side="left"
+        )
         tokenized_inputs = {k: v.to(self.model.device) for k, v in tokenized_inputs.items()}
         input_ids = tokenized_inputs["input_ids"]
         past_key_values = None

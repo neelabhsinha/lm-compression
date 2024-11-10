@@ -7,26 +7,31 @@ from torch.utils.data import DataLoader
 from src.data.prompt import PromptMap
 
 
+def collate_fn(batch):
+    batch_dict = {key: [d[key] for d in batch] for key in batch[0]}
+    return batch_dict
+
+
 class DatasetLoader:
-    def __init__(self, dataset_name, dataset_split):
-        self.dataset_name = dataset_name
-        self.dataset = None
+    def __init__(self, dataset_split):
+        self.dataset_names = ["narrativeqa", "qasper", "multifieldqa_en", "hotpotqa", "2wikimqa", "musique",
+                    "gov_report", "qmsum", "multi_news", "trec", "triviaqa", "samsum",
+                    "passage_count", "passage_retrieval_en", "lcc", "repobench-p"]
+        self.data_loaders = None
         self.dataset_split = dataset_split
-        prompt_mapper = PromptMap()
-        self.map = prompt_mapper.get_map(dataset_name)
+        self.prompt_mapper = PromptMap()
         os.makedirs(cache_dir, exist_ok=True)
 
-    def load(self):
-        if 'cnn_dailymail' in self.dataset_name:
-            dataset = load_dataset(self.dataset_name, '3.0.0', split=self.dataset_split, cache_dir=cache_dir)
-        else:
-            dataset = load_dataset(self.dataset_name, split=self.dataset_split, cache_dir=cache_dir)
-        dataset = dataset.map(self.map)
-        self.dataset = dataset
+    def load(self, dataset_name=None):
+        dataset = load_dataset('THUDM/LongBench', dataset_name, split=self.dataset_split, cache_dir=cache_dir)
+        mapper = self.prompt_mapper.get_prompt_function(dataset_name)
+        dataset = dataset.map(mapper)
+        return dataset
 
     def get_loader(self, batch_size=64):
-        if self.dataset is None:
-            self.load()
+        data_loaders = {}
         shuffle = False
-        dataloader = DataLoader(self.dataset, batch_size=batch_size, shuffle=shuffle)
-        return dataloader
+        for dataset_name in self.dataset_names:
+            dataset = self.load(dataset_name)
+            data_loaders[dataset_name] = DataLoader(dataset, batch_size=batch_size, shuffle=shuffle, collate_fn=collate_fn)
+        return data_loaders

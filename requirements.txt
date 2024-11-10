@@ -5,8 +5,8 @@ torch
 transformers
 datasets
 nltk
-rouge-score
+fuzzywuzzy[speedup]
+rouge
 accelerate
 bitsandbytes
-evaluate
 tqdm
