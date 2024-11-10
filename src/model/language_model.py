@@ -48,9 +48,9 @@ class LanguageModel:
                     out = self.model(input_ids=output_tokens[:, -1:], past_key_values=past_key_values, use_cache=True)
             last_token_logit = out.logits[:, -1, :]
 
-            past_key_values, next_retention_window = self.sequence_kv_compressor.compress_kv_cache(out.past_key_values,
-                                                                                                   retention_window_start,
-                                                                                                   prefill=is_prefill)
+            past_key_values, next_retention_window = (
+                self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
+                                                              prefill=is_prefill))
             retention_window_start = next_retention_window
             if decoding_strategy == DecodingStrategy.GREEDY:
                 next_tokens = self._greedy_decode(last_token_logit)

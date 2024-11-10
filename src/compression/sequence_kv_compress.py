@@ -18,7 +18,8 @@ class SequenceKVCompressor:
     def get_all_local_windows(self):
         all_local_windows = []
         for layer_idx in range(self.num_transformer_blocks):
-            local_window = int(self.initial_local_window * (1 + layer_idx/self.num_transformer_blocks * (1/self.steepness_coefficient - 1)))
+            local_window = int(self.initial_local_window * (1 + layer_idx/self.num_transformer_blocks
+                                                            * (1/self.steepness_coefficient - 1)))
             all_local_windows.append(local_window)
         return tuple(all_local_windows)
 
@@ -30,10 +31,13 @@ class SequenceKVCompressor:
         for layer_idx in range(self.num_transformer_blocks):
             seq_len = past_key_values[layer_idx][0].size(self.kv_seq_dim_idx)
             current_uncompressed_window_length = seq_len - retention_window_start[layer_idx]
-            if (seq_len - retention_window_start[layer_idx]) > 0 and current_uncompressed_window_length > self.all_local_windows[layer_idx]:
+            if ((seq_len - retention_window_start[layer_idx]) > 0 and
+                    current_uncompressed_window_length > self.all_local_windows[layer_idx]):
                 if prefill and not self.skip_prefill_compression:
-                    new_keys = self.compress_prefill(past_key_values[layer_idx][0], retention_window_start[layer_idx], layer_idx)
-                    new_values = self.compress_prefill(past_key_values[layer_idx][1], retention_window_start[layer_idx], layer_idx)
+                    new_keys = self.compress_prefill(past_key_values[layer_idx][0],
+                                                     retention_window_start[layer_idx], layer_idx)
+                    new_values = self.compress_prefill(past_key_values[layer_idx][1],
+                                                       retention_window_start[layer_idx], layer_idx)
                     new_past_key_values.append((new_keys, new_values))
                 else:
                     new_keys = self.compress_decode(past_key_values[layer_idx][0])
@@ -48,7 +52,8 @@ class SequenceKVCompressor:
         seq_len = x.size(self.kv_seq_dim_idx)
         while seq_len - retention_window_start > self.all_local_windows[layer_idx]:
             x_sink = self.slice2d(x, 0, self.sink_tokens)
-            x_compress_chunk = self.slice2d(x, self.sink_tokens, retention_window_start + self.all_local_windows[layer_idx])
+            x_compress_chunk = self.slice2d(x, self.sink_tokens,
+                                            retention_window_start + self.all_local_windows[layer_idx])
             x_future = self.slice2d(x, retention_window_start + self.all_local_windows[layer_idx], seq_len)
             x_compressed = self.compress2d(x_compress_chunk, 0, x_compress_chunk.size(2))
             x = torch.cat((x_sink, x_compressed, x_future), dim=self.kv_seq_dim_idx)

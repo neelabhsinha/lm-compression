@@ -11,7 +11,8 @@ class ContextCompressor:
             self.tokenizer.truncation_side = "left"
         else:
             self.tokenizer.truncation_side = "right"
-        context_tokens = self.tokenizer(context, return_tensors="pt", truncation=True, max_length=remaining_tokens)["input_ids"]
+        context_tokens = self.tokenizer(context, return_tensors="pt", truncation=True,
+                                        max_length=remaining_tokens)["input_ids"]
         truncated_context = self.tokenizer.decode(context_tokens[0], skip_special_tokens=True)
 
         return truncated_context

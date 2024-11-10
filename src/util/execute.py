@@ -48,7 +48,9 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
                                         max_length=max_length)
                 outputs = response
                 labels = batch['target']
-                scores = [evaluation_metrics.get_score(dataset_name, output, label, all_classes) for dataset_name, output, label, all_classes in zip(dataset_names, outputs, labels, all_classes_batch)]
+                scores = [evaluation_metrics.get_score(dataset_name, output, label, all_classes)
+                          for dataset_name, output, label, all_classes in
+                          zip(dataset_names, outputs, labels, all_classes_batch)]
                 results['dataset'].extend(dataset_names)
                 results['input'].extend(input_text)
                 results['output'].extend(outputs)
