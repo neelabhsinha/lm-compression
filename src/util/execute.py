@@ -56,7 +56,7 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
                 results['metric'].extend(scores)
             except RuntimeError or torch.cuda.OutOfMemoryError:
                 print('Out of memory error occurred. Skipping this batch.')
-            if i > 1:
-                break
+            # if i > 1:
+            #     break
     results_df = pd.DataFrame(results)
     save_results(results_path, results_df)
