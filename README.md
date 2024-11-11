@@ -14,7 +14,6 @@ This project provides an efficient method for compressing the key-value cache in
   - [Example Usage](#example-usage)
   - [Project Structure](#project-structure)
   - [File Descriptions](#file-descriptions)
-  - [License](#license)
 
 ## Features
 - Compresses the key-value (KV) cache in transformers to enable faster and memory-efficient inference.
@@ -90,6 +89,8 @@ python main.py \
     --batch_size 8 \
     --dataset_split "test"
 ```
+
+After execution, results will be stored in `results` folder.
 
 ## Project Structure
 ```
