@@ -17,7 +17,8 @@ def get_args():
     parser = argparse.ArgumentParser(
         description='Project for compressing key-value cache in transformers models for efficient inference.')
 
-    parser.add_argument('--model_name', type=str, default='gpt2', help='Huggingface model ID to be used.')
+    parser.add_argument('--model_name', type=str, default='meta-llama/Llama-3-8B-Instruct',
+                        help='Huggingface model ID to be used.')
     parser.add_argument('--decoding_strategy', type=str, default='greedy', help='Decoding strategy to be used.')
     parser.add_argument('--initial_local_window', type=int, default=512,
                         help='Window size of initial layer\'s key-value cache to retain while compressing.')
