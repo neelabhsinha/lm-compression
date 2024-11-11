@@ -32,7 +32,7 @@ Detailed requirements can be found in the `requirements.txt` file.
 ## Installation
 1. Clone this repository:
    ```bash
-   git clone https://github.com/neelabhsinha/l,-compression.git
+   git clone https://github.com/neelabhsinha/lm-compression.git
    cd lm-compression
    ```
 2. Install the required Python packages:
