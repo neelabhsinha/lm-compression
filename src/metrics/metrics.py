@@ -1,7 +1,6 @@
 import re
 import string
 
-
 from fuzzywuzzy import fuzz
 import difflib
 
@@ -10,7 +9,7 @@ from collections import Counter
 from rouge import Rouge
 
 
-def normalize_answer(s): # used by other functions
+def normalize_answer(s):  # used by other functions
     """Lower text and remove punctuation, articles and extra whitespace."""
 
     def remove_articles(text):
@@ -39,7 +38,7 @@ def count_score(prediction, ground_truth, **kwargs):
     return float(final_score)
 
 
-def retrieval_score(prediction, ground_truth, **kwargs): # Accuracy (EM) as per paper
+def retrieval_score(prediction, ground_truth, **kwargs):  # Accuracy (EM) as per paper
     pattern = r'Paragraph (\d+)'
     matches = re.findall(pattern, ground_truth)
     ground_truth_id = matches[0]
@@ -52,14 +51,18 @@ def retrieval_score(prediction, ground_truth, **kwargs): # Accuracy (EM) as per 
     return float(final_score)
 
 
-def code_sim_score(prediction, ground_truth, **kwargs): # Edit Sim as per paper
-    all_lines = prediction.lstrip('\n').split('\n')
-    prediction = ""
-    for line in all_lines:
-        if ('`' not in line) and ('#' not in line) and ('//' not in line):
-            prediction = line
-            break
-    return (fuzz.ratio(prediction, ground_truth) / 100)
+def code_sim_score(prediction, ground_truth, **kwargs):
+    prediction = re.sub(r'/\*.*?\*/', '', prediction, flags=re.DOTALL)
+    prediction = re.sub(r'(""".*?""")|(\'\'\'.*?\'\'\')', '', prediction, flags=re.DOTALL)
+    cleaned_lines = []
+    for line in prediction.split('\n'):
+        line = line.split('#')[0].split('//')[0].strip()
+        if line:
+            cleaned_lines.append(line)
+    cleaned_prediction = '\n'.join(cleaned_lines)
+    cleaned_prediction = re.sub(r'\s+', ' ', cleaned_prediction).strip()
+    normalized_ground_truth = re.sub(r'\s+', ' ', ground_truth).strip()
+    return fuzz.ratio(cleaned_prediction, normalized_ground_truth) / 100
 
 
 def classification_score(prediction, ground_truth, **kwargs):  # Accuracy (CLS) as per paper
@@ -78,7 +81,7 @@ def classification_score(prediction, ground_truth, **kwargs):  # Accuracy (CLS) 
     return score
 
 
-def rouge_score(prediction, ground_truth, **kwargs): # ROUGE-L as per paper
+def rouge_score(prediction, ground_truth, **kwargs):  # ROUGE-L as per paper
     rouge = Rouge()
     try:
         scores = rouge.get_scores([prediction], [ground_truth], avg=True)
@@ -87,7 +90,7 @@ def rouge_score(prediction, ground_truth, **kwargs): # ROUGE-L as per paper
     return scores["rouge-l"]["f"]
 
 
-def f1_score(prediction, ground_truth, **kwargs): # used by qa_f1_score (internal use)
+def f1_score(prediction, ground_truth, **kwargs):  # used by qa_f1_score (internal use)
     common = Counter(prediction) & Counter(ground_truth)
     num_same = sum(common.values())
     if num_same == 0:
@@ -98,7 +101,7 @@ def f1_score(prediction, ground_truth, **kwargs): # used by qa_f1_score (interna
     return f1
 
 
-def qa_f1_score(prediction, ground_truth, **kwargs): # F1 (as per paper)
+def qa_f1_score(prediction, ground_truth, **kwargs):  # F1 (as per paper)
     normalized_prediction = normalize_answer(prediction)
     normalized_ground_truth = normalize_answer(ground_truth)
 

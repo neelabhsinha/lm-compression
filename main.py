@@ -30,7 +30,7 @@ def get_args():
     parser.add_argument('--seq_pooling_type', type=str, default='mean', help='Pooling type for sequence compression.')
     parser.add_argument('--compress_context', action='store_true', help='Whether to compress the context.')
     parser.add_argument('--device', type=str, default='cpu', help='Device to be used for inference.')
-    parser.add_argument('--max_length', type=int, default=128, help='Maximum length of the output sequence.')
+    parser.add_argument('--max_length', type=int, default=512, help='Maximum length of the output sequence.')
     parser.add_argument('--batch_size', type=int, default=4, help='Batch size for inference.')
     parser.add_argument('--dataset_split', type=str, default='test', help='Dataset split to be used.')
 

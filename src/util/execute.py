@@ -32,7 +32,7 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
                     f'{seq_pooling_type.name.lower()}__'
                     f'{"context_compress" if compress_context else "no_context_compress"}')
     results_path = results_path.replace('/', '--')
-    results = {'dataset': [], 'input': [], 'output': [], 'target': [], 'metric': []}
+    results = {'dataset': [], 'output': [], 'target': [], 'metric': []}
     total_datasets = len(data_loaders)
     for j, dataset in enumerate(data_loaders):
         print(f'\nRunning inference on {dataset} dataset ({j + 1}/{total_datasets})')
@@ -40,7 +40,6 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
         pbar = tqdm(data_loader, total=len(data_loader), desc=f'Generating results')
         for i, batch in enumerate(pbar):
             input_text = batch['input_text']
-            # input_text = ['Hi. How are you?', 'What is the capital of France?']
             all_classes_batch = batch['all_classes']
             dataset_names = batch['dataset']
             try:
@@ -52,13 +51,11 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
                           for dataset_name, output, label, all_classes in
                           zip(dataset_names, outputs, labels, all_classes_batch)]
                 results['dataset'].extend(dataset_names)
-                results['input'].extend(input_text)
                 results['output'].extend(outputs)
                 results['target'].extend(labels)
                 results['metric'].extend(scores)
             except torch.cuda.OutOfMemoryError:
                 print('Out of memory error occurred. Skipping this batch.')
-            # if i > 1:
-            #     break
+                torch.cuda.empty_cache()
     results_df = pd.DataFrame(results)
     save_results(results_path, results_df)
