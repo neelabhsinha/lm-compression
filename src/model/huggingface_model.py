@@ -21,13 +21,13 @@ class HuggingFaceModel:
         os.makedirs(cache_dir, exist_ok=True)
 
     def get_model(self):
-        model = AutoModelForCausalLM.from_pretrained(self.model_name, cache_dir=cache_dir, torch_dtype=torch.float16, device_map='auto')
+        model = AutoModelForCausalLM.from_pretrained(self.model_name, cache_dir=cache_dir, torch_dtype=torch.float16, device_map='auto', trust_remote_code=True)
         print(f'Loaded model {self.model_name} on device {model.device}')
 
         return model
 
     def get_tokenizer(self):
-        tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=cache_dir, padding_side='left')
+        tokenizer = AutoTokenizer.from_pretrained(self.model_name, cache_dir=cache_dir, padding_side='left', trust_remote_code=True)
         print(f'Loaded tokenizer {self.model_name}')
         if tokenizer.eos_token is not None:
             tokenizer.pad_token = tokenizer.eos_token
