@@ -21,7 +21,7 @@ class HuggingFaceModel:
         os.makedirs(cache_dir, exist_ok=True)
 
     def get_model(self):
-        model = AutoModelForCausalLM.from_pretrained(self.model_name, cache_dir=cache_dir)
+        model = AutoModelForCausalLM.from_pretrained(self.model_name, cache_dir=cache_dir, torch_dtype=torch.float16, device_map='auto')
         print(f'Loaded model {self.model_name}')
 
         return model

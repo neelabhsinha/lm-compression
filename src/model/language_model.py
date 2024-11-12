@@ -11,7 +11,7 @@ class LanguageModel:
         model_loader = HuggingFaceModel(model_name)
         self.model = model_loader.get_model()
         self.max_context_size = self.model.config.max_position_embeddings
-        self.model = self.model.to(device)
+        # self.model = self.model.to(device)
         self.tokenizer = model_loader.get_tokenizer()
         self.tokenizer.padding_side = "left"
         self.sink_tokens = sink_tokens
