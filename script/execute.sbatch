@@ -1,0 +1,54 @@
+#!/bin/bash
+#SBATCH -LM_Compression
+#SBATCH -N1 --ntasks-per-node=1
+#SBATCH --gres=gpu:H100:1
+#SBATCH --mem-per-gpu=224GB
+#SBATCH -t4:00:00
+#SBATCH -o ./logs/%j.out
+#SBATCH -e ./logs/%j.err
+#SBATCH --mail-type=BEGIN,END,FAIL
+#SBATCH --mail-user=nsinha68@gatech.edu
+
+
+export PYTHONUNBUFFERED=TRUE
+source ~/.bashrc
+conda activate sysml_env
+cd ~/scratch/lm-compression
+
+model_name="meta-llama/Llama-3-8B-Instruct"
+decoding_strategy="greedy"
+initial_local_window=512
+steepness_coefficient=1
+sink_tokens=4
+skip_prefill_compression=false
+seq_pooling_type="mean"
+compress_context=false
+device="cuda"
+max_length=32
+batch_size=4
+dataset_split="test"
+
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --model_name) model_name="$2"; shift 2 ;;
+    --decoding_strategy) decoding_strategy="$2"; shift 2 ;;
+    --initial_local_window) initial_local_window="$2"; shift 2 ;;
+    --steepness_coefficient) steepness_coefficient="$2"; shift 2 ;;
+    --sink_tokens) sink_tokens="$2"; shift 2 ;;
+    --skip_prefill_compression) skip_prefill_compression=true; shift 1 ;;
+    --seq_pooling_type) seq_pooling_type="$2"; shift 2 ;;
+    --compress_context) compress_context=true; shift 1 ;;
+    --device) device="$2"; shift 2 ;;
+    --max_length) max_length="$2"; shift 2 ;;
+    --batch_size) batch_size="$2"; shift 2 ;;
+    --dataset_split) dataset_split="$2"; shift 2 ;;
+    *) echo "Unknown option: $1"; exit 1 ;;
+  esac
+done
+
+cmd="srun -u python -u main.py --model_name $model_name --decoding_strategy $decoding_strategy --initial_local_window $initial_local_window --steepness_coefficient $steepness_coefficient --sink_tokens $sink_tokens --seq_pooling_type $seq_pooling_type --device $device --max_length $max_length --batch_size $batch_size --dataset_split $dataset_split"
+
+[[ "$skip_prefill_compression" = true ]] && cmd+=" --skip_prefill_compression"
+[[ "$compress_context" = true ]] && cmd+=" --compress_context"
+
+eval $cmd
