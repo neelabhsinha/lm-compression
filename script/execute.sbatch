@@ -14,7 +14,7 @@ source ~/.bashrc
 conda activate sysml_env
 cd ~/scratch/lm-compression
 
-model_name="meta-llama/Llama-3-8B-Instruct"
+model_name="meta-llama/Meta-Llama-3-8B-Instruct"
 decoding_strategy="greedy"
 initial_local_window=512
 steepness_coefficient=1
@@ -23,7 +23,7 @@ skip_prefill_compression=false
 seq_pooling_type="mean"
 compress_context=false
 device="cuda"
-max_length=32
+max_length=128
 batch_size=4
 dataset_split="test"
 
