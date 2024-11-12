@@ -1,11 +1,10 @@
 #!/bin/bash
-#SBATCH -LM_Compression
+#SBATCH -JHGX_H100_Example
 #SBATCH -N1 --ntasks-per-node=1
 #SBATCH --gres=gpu:H100:1
-#SBATCH --mem-per-gpu=224GB
-#SBATCH -t4:00:00
-#SBATCH -o ./logs/%j.out
-#SBATCH -e ./logs/%j.err
+#SBATCH --mem-per-gpu=80GB
+#SBATCH -t2:00:00
+#SBATCH -oReport-%j.out
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=nsinha68@gatech.edu
 
