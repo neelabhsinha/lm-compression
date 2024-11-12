@@ -3,7 +3,7 @@
 #SBATCH -N1 --ntasks-per-node=1
 #SBATCH --gres=gpu:H100:1
 #SBATCH --mem-per-gpu=80GB
-#SBATCH -t2:00:00
+#SBATCH -t3:00:00
 #SBATCH -oReport-%j.out
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=nsinha68@gatech.edu
