@@ -22,7 +22,7 @@ class HuggingFaceModel:
 
     def get_model(self):
         model = AutoModelForCausalLM.from_pretrained(self.model_name, cache_dir=cache_dir, torch_dtype=torch.float16, device_map='auto')
-        print(f'Loaded model {self.model_name}')
+        print(f'Loaded model {self.model_name} on device {model.device}')
 
         return model
 
