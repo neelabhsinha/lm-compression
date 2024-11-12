@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -JHGX_H100_Example
+#SBATCH -JLM_Compression
 #SBATCH -N1 --ntasks-per-node=1
 #SBATCH --gres=gpu:H100:1
 #SBATCH --mem-per-gpu=80GB
