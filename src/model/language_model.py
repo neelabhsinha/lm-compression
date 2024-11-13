@@ -40,7 +40,7 @@ class LanguageModel:
         chunked_prefill_tokens = self.chunk_prefill(input_ids)
         for chunk in chunked_prefill_tokens:
             with torch.no_grad():
-                out = self.model(input_ids=chunk, past_key_values=past_key_values, use_cache=True)
+                out = self.model(input_ids=chunk.to(torch.int32), past_key_values=past_key_values, use_cache=True)
             past_key_values, next_retention_window = (
                 self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
                                                                 prefill=True))
@@ -48,7 +48,7 @@ class LanguageModel:
         for decode_step in range(max_length):
             with torch.no_grad():
                 if decode_step > 0:
-                    out = self.model(input_ids=output_tokens[:, -1:], past_key_values=past_key_values, use_cache=True)
+                    out = self.model(input_ids=output_tokens[:, -1:].to(torch.int32), past_key_values=past_key_values, use_cache=True)
                     past_key_values, next_retention_window = (
                         self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
                                                                     prefill=False))

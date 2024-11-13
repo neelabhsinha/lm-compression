@@ -9,6 +9,7 @@ from src.model.language_model import LanguageModel
 from src.metrics.longbench_scorer import LongBenchEvaluationMetric
 from src.util.results_io import save_results
 
+from const import dataset2max_len
 
 def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_tokens,
             initial_local_window, steepness_coefficient,
@@ -36,6 +37,7 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
     for j, dataset in enumerate(data_loaders):
         print(f'\nRunning inference on {dataset} dataset ({j + 1}/{total_datasets})')
         data_loader = data_loaders[dataset]
+        max_length = dataset2max_len[dataset]
         pbar = tqdm(data_loader, total=len(data_loader), desc=f'Generating results')
         for i, batch in enumerate(pbar):
             input_text = batch['input_text']
@@ -56,5 +58,7 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
             except torch.cuda.OutOfMemoryError:
                 print('Out of memory error occurred. Skipping this batch.')
                 torch.cuda.empty_cache()
+            if i > 10:
+                break
     results_df = pd.DataFrame(results)
     save_results(results_path, results_df)
