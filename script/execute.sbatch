@@ -4,7 +4,7 @@
 #SBATCH --gres=gpu:H100:1
 #SBATCH --mem-per-gpu=80GB
 #SBATCH -t3:00:00
-#SBATCH -oReport-%j.out
+#SBATCH -ologs/Report-%j.out
 #SBATCH --mail-type=BEGIN,END,FAIL
 #SBATCH --mail-user=nsinha68@gatech.edu
 
