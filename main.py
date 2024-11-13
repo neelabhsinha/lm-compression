@@ -29,7 +29,6 @@ def get_args():
                         help='Whether to compress the cache during prefilling.')
     parser.add_argument('--seq_pooling_type', type=str, default='mean', help='Pooling type for sequence compression.')
     parser.add_argument('--compress_context', action='store_true', help='Whether to compress the context.')
-    parser.add_argument('--device', type=str, default='cpu', help='Device to be used for inference.')
     parser.add_argument('--max_length', type=int, default=512, help='Maximum length of the output sequence.')
     parser.add_argument('--batch_size', type=int, default=4, help='Batch size for inference.')
     parser.add_argument('--dataset_split', type=str, default='test', help='Dataset split to be used.')
@@ -42,4 +41,4 @@ if __name__ == '__main__':
     args = get_args()
     execute(args.model_name, args.decoding_strategy, args.dataset_split, args.batch_size, args.sink_tokens,
             args.initial_local_window, args.steepness_coefficient, args.skip_prefill_compression, args.seq_pooling_type,
-            args.compress_context, args.max_length, args.device)
+            args.compress_context, args.max_length)

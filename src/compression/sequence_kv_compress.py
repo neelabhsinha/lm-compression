@@ -27,12 +27,11 @@ class SequenceKVCompressor:
         next_retention_window_start = retention_window_start # to be different for all layers now
         new_past_key_values = []
         if past_key_values is None:
-            return None
+            return None, None
         for layer_idx in range(self.num_transformer_blocks):
             seq_len = past_key_values[layer_idx][0].size(self.kv_seq_dim_idx)
             current_uncompressed_window_length = seq_len - retention_window_start[layer_idx]
-            if ((seq_len - retention_window_start[layer_idx]) > 0 and
-                    current_uncompressed_window_length > self.all_local_windows[layer_idx]):
+            if current_uncompressed_window_length > self.all_local_windows[layer_idx]:
                 if prefill and not self.skip_prefill_compression:
                     new_keys = self.compress_prefill(past_key_values[layer_idx][0],
                                                      retention_window_start[layer_idx], layer_idx)
@@ -43,10 +42,10 @@ class SequenceKVCompressor:
                     new_keys = self.compress_decode(past_key_values[layer_idx][0])
                     new_values = self.compress_decode(past_key_values[layer_idx][1])
                     new_past_key_values.append((new_keys, new_values))
-                next_retention_window_start[layer_idx] = past_key_values[layer_idx][0].size(self.kv_seq_dim_idx)
+                next_retention_window_start[layer_idx] = new_keys.size(self.kv_seq_dim_idx)
             else:
                 new_past_key_values.append(past_key_values[layer_idx])
-            return tuple(new_past_key_values), next_retention_window_start
+        return tuple(new_past_key_values), next_retention_window_start
 
     def compress_prefill(self, x, retention_window_start, layer_idx):
         seq_len = x.size(self.kv_seq_dim_idx)

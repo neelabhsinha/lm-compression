@@ -7,16 +7,16 @@ from src.compression.sequence_kv_compress import SequenceKVCompressor
 
 class LanguageModel:
     def __init__(self, model_name, sink_tokens, initial_local_window, steepness_coefficient, skip_prefill_compression,
-                 sequence_pooling_type, kv_seq_dim=2, device='cpu'):
+                 sequence_pooling_type, kv_seq_dim=2):
         model_loader = HuggingFaceModel(model_name)
         self.model = model_loader.get_model()
         self.max_context_size = self.model.config.max_position_embeddings
-        # self.model = self.model.to(device)
         self.tokenizer = model_loader.get_tokenizer()
         self.tokenizer.padding_side = "left"
         self.sink_tokens = sink_tokens
         self.steepness_coefficient = steepness_coefficient
         self.num_transformer_blocks = self.model.config.num_hidden_layers
+        self.initial_local_window = initial_local_window
         self.sequence_kv_compressor = SequenceKVCompressor(sink_tokens, sequence_pooling_type,
                                                            initial_local_window, steepness_coefficient,
                                                            skip_prefill_compression, self.num_transformer_blocks,
@@ -28,9 +28,8 @@ class LanguageModel:
         tokenized_inputs = self.tokenizer(
             input_batch,
             return_tensors="pt",
-            padding="max_length",
-            truncation=True,
-            max_length=self.max_context_size
+            padding="longest",
+            truncation=False
         )
         tokenized_inputs = {k: v.to(self.model.device) for k, v in tokenized_inputs.items()}
         input_ids = tokenized_inputs["input_ids"]
@@ -43,7 +42,13 @@ class LanguageModel:
             is_prefill = decode_step == 0
             with torch.no_grad():
                 if is_prefill:
-                    out = self.model(input_ids=output_tokens, past_key_values=past_key_values, use_cache=True)
+                    chunked_prefill_tokens = self.chunk_prefill(input_ids)
+                    for chunk in chunked_prefill_tokens:
+                        out = self.model(input_ids=chunk, past_key_values=past_key_values, use_cache=True)
+                        past_key_values, next_retention_window = (
+                            self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
+                                                                          prefill=is_prefill))
+                        retention_window_start = next_retention_window
                 else:
                     out = self.model(input_ids=output_tokens[:, -1:], past_key_values=past_key_values, use_cache=True)
             last_token_logit = out.logits[:, -1, :]
@@ -68,6 +73,16 @@ class LanguageModel:
                 break
         decoded_results = self.tokenizer.batch_decode(generated_tokens.to(torch.int32), skip_special_tokens=True)
         return decoded_results
+    
+    def chunk_prefill(self, prefill_tokens):
+        B, seq_len = prefill_tokens.shape
+        chunk_size = self.initial_local_window
+        n, remainder = divmod(seq_len, chunk_size)
+        n = n + 1 if remainder > 0 else n
+        chunks = [prefill_tokens[:, i*chunk_size : (i+1)*chunk_size] for i in range(n-1)]
+        if remainder > 0:
+            chunks.append(prefill_tokens[:, (n-1)*chunk_size:])
+        return chunks
 
     @staticmethod
     def _greedy_decode(logit):

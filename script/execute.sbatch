@@ -45,7 +45,7 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-cmd="srun -u python -u main.py --model_name $model_name --decoding_strategy $decoding_strategy --initial_local_window $initial_local_window --steepness_coefficient $steepness_coefficient --sink_tokens $sink_tokens --seq_pooling_type $seq_pooling_type --device $device --max_length $max_length --batch_size $batch_size --dataset_split $dataset_split"
+cmd="srun -u python -u main.py --model_name $model_name --decoding_strategy $decoding_strategy --initial_local_window $initial_local_window --steepness_coefficient $steepness_coefficient --sink_tokens $sink_tokens --seq_pooling_type $seq_pooling_type --max_length $max_length --batch_size $batch_size --dataset_split $dataset_split"
 
 [[ "$skip_prefill_compression" = true ]] && cmd+=" --skip_prefill_compression"
 [[ "$compress_context" = true ]] && cmd+=" --compress_context"
