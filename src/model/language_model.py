@@ -35,28 +35,25 @@ class LanguageModel:
         input_ids = tokenized_inputs["input_ids"]
         past_key_values = None
         batch_size = input_ids.size(0)
-        output_tokens = input_ids
-        generated_tokens = torch.zeros(batch_size, 0).to(self.model.device)
+        output_tokens = torch.zeros(batch_size, 0).to(self.model.device)
         retention_window_start = [self.sink_tokens] * self.num_transformer_blocks
-        for decode_step in range(max_length):
-            is_prefill = decode_step == 0
+        chunked_prefill_tokens = self.chunk_prefill(input_ids)
+        for chunk in chunked_prefill_tokens:
             with torch.no_grad():
-                if is_prefill:
-                    chunked_prefill_tokens = self.chunk_prefill(input_ids)
-                    for chunk in chunked_prefill_tokens:
-                        out = self.model(input_ids=chunk, past_key_values=past_key_values, use_cache=True)
-                        past_key_values, next_retention_window = (
-                            self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
-                                                                          prefill=is_prefill))
-                        retention_window_start = next_retention_window
-                else:
-                    out = self.model(input_ids=output_tokens[:, -1:], past_key_values=past_key_values, use_cache=True)
-            last_token_logit = out.logits[:, -1, :]
-
+                out = self.model(input_ids=chunk, past_key_values=past_key_values, use_cache=True)
             past_key_values, next_retention_window = (
                 self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
-                                                              prefill=is_prefill))
+                                                                prefill=True))
             retention_window_start = next_retention_window
+        for decode_step in range(max_length):
+            with torch.no_grad():
+                if decode_step > 0:
+                    out = self.model(input_ids=output_tokens[:, -1:], past_key_values=past_key_values, use_cache=True)
+                    past_key_values, next_retention_window = (
+                        self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
+                                                                    prefill=False))
+                    retention_window_start = next_retention_window
+            last_token_logit = out.logits[:, -1, :]
             if decoding_strategy == DecodingStrategy.GREEDY:
                 next_tokens = self._greedy_decode(last_token_logit)
             elif decoding_strategy == DecodingStrategy.TOP_K:
@@ -67,11 +64,10 @@ class LanguageModel:
                 next_tokens = self._random_sampling(last_token_logit)
             else:
                 raise NotImplementedError(f"Decoding strategy {decoding_strategy} not implemented.")
-            output_tokens = torch.cat((output_tokens, next_tokens.unsqueeze(1)), dim=1)
-            generated_tokens = torch.cat((generated_tokens, next_tokens.unsqueeze(1)), dim=1)
+            output_tokens = torch.cat((output_tokens, next_tokens.unsqueeze(1)), dim=-1)
             if torch.all(next_tokens == self.tokenizer.eos_token_id):
                 break
-        decoded_results = self.tokenizer.batch_decode(generated_tokens.to(torch.int32), skip_special_tokens=True)
+        decoded_results = self.tokenizer.batch_decode(output_tokens.to(torch.int32), skip_special_tokens=True)
         return decoded_results
     
     def chunk_prefill(self, prefill_tokens):
