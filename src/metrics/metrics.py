@@ -97,7 +97,7 @@ def f1_score(prediction, ground_truth, **kwargs):  # used by qa_f1_score (intern
         return 0
     precision = 1.0 * num_same / len(prediction)
     recall = 1.0 * num_same / len(ground_truth)
-    f1 = (2 * precision * recall) / (precision + recall)
+    f1 = recall
     return f1
 
 

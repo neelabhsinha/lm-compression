@@ -33,22 +33,27 @@ class LanguageModel:
         )
         tokenized_inputs = {k: v.to(self.model.device) for k, v in tokenized_inputs.items()}
         input_ids = tokenized_inputs["input_ids"]
+        attention_mask = tokenized_inputs["attention_mask"]
         past_key_values = None
         batch_size = input_ids.size(0)
+        if input_ids.size(1) > self.max_context_size:
+            half = input_ids.size(1) // 2
+            input_ids = torch.cat((input_ids[:, :half], input_ids[:, -half:]), dim=1)
+            attention_mask = torch.cat((attention_mask[:, :half], attention_mask[:, -half:]), dim=1)
         output_tokens = torch.zeros(batch_size, 0).to(self.model.device)
         retention_window_start = [self.sink_tokens] * self.num_transformer_blocks
-        chunked_prefill_tokens = self.chunk_prefill(input_ids)
-        for chunk in chunked_prefill_tokens:
-            with torch.no_grad():
-                out = self.model(input_ids=chunk.to(torch.int32), past_key_values=past_key_values, use_cache=True)
-            past_key_values, next_retention_window = (
-                self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
-                                                                prefill=True))
-            retention_window_start = next_retention_window
         for decode_step in range(max_length):
             with torch.no_grad():
-                if decode_step > 0:
-                    out = self.model(input_ids=output_tokens[:, -1:].to(torch.int32), past_key_values=past_key_values, use_cache=True)
+                if decode_step == 0:
+                    out = self.model(input_ids=input_ids.to(torch.int64),
+                                     past_key_values=past_key_values, use_cache=True)
+                    past_key_values, next_retention_window = (
+                        self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
+                                                                    prefill=True))
+                    retention_window_start = next_retention_window
+                elif decode_step > 0:
+                    out = self.model(input_ids=output_tokens[:, -1:].to(torch.int64),
+                                     past_key_values=past_key_values, use_cache=True)
                     past_key_values, next_retention_window = (
                         self.sequence_kv_compressor.compress_kv_cache(out.past_key_values, retention_window_start,
                                                                     prefill=False))

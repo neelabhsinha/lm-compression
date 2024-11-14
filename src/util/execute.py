@@ -13,7 +13,7 @@ from const import dataset2max_len
 
 def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_tokens,
             initial_local_window, steepness_coefficient,
-            skip_prefill_compression, seq_pooling_type, compress_context, max_length):
+            skip_prefill_compression, seq_pooling_type, compress_context):
     seq_pooling_type = SequenceCompressionPoolingType[seq_pooling_type.upper()]
     model = LanguageModel(model_name=model_name, sink_tokens=sink_tokens,
                           initial_local_window=initial_local_window,
@@ -26,9 +26,7 @@ def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_token
                     .get_loader(batch_size=batch_size))
     decoding_strategy = DecodingStrategy[decoding_strategy.upper()]
     evaluation_metrics = LongBenchEvaluationMetric()
-    results_path = (f'{model_name}__{decoding_strategy.name.lower()}__{str(sink_tokens)}__'
-                    f'{str(initial_local_window)}__{str(steepness_coefficient)}__'
-                    f'{"skip_prefill_compression" if skip_prefill_compression else "compress_prefill"}__'
+    results_path = (f'{model_name}__{str(initial_local_window)}__{str(steepness_coefficient)}__'
                     f'{seq_pooling_type.name.lower()}__'
                     f'{"context_compress" if compress_context else "no_context_compress"}')
     results_path = results_path.replace('/', '--')
