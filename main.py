@@ -37,5 +37,4 @@ if __name__ == '__main__':
     configure_huggingface()
     args = get_args()
     execute(args.model_name, args.decoding_strategy, args.dataset_split, args.batch_size, args.sink_tokens,
-            args.initial_local_window, args.steepness_coefficient, args.skip_prefill_compression, args.seq_pooling_type,
-            args.compress_context)
+            args.initial_local_window, args.steepness_coefficient, args.seq_pooling_type, args.compress_context)

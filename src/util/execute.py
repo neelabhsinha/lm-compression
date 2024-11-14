@@ -12,13 +12,11 @@ from src.util.results_io import save_results
 from const import dataset2max_len
 
 def execute(model_name, decoding_strategy, dataset_split, batch_size, sink_tokens,
-            initial_local_window, steepness_coefficient,
-            skip_prefill_compression, seq_pooling_type, compress_context):
+            initial_local_window, steepness_coefficient, seq_pooling_type, compress_context):
     seq_pooling_type = SequenceCompressionPoolingType[seq_pooling_type.upper()]
     model = LanguageModel(model_name=model_name, sink_tokens=sink_tokens,
                           initial_local_window=initial_local_window,
                           steepness_coefficient=steepness_coefficient,
-                          skip_prefill_compression=skip_prefill_compression,
                           sequence_pooling_type=seq_pooling_type)
     tokenizer = model.tokenizer
     max_context_size = model.max_context_size

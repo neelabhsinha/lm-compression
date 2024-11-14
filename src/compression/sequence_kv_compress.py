@@ -4,13 +4,12 @@ from src.enum.sequence_compression import SequenceCompressionPoolingType
 
 
 class SequenceKVCompressor:
-    def __init__(self, sink_tokens, pooling_type, initial_local_window, steepness_coefficient, skip_prefill_compression,
+    def __init__(self, sink_tokens, pooling_type, initial_local_window, steepness_coefficient,
                  num_transformer_blocks, kv_seq_dim_idx=2):
         self.sink_tokens = sink_tokens
         self.pooling_type = pooling_type
         self.initial_local_window = initial_local_window
         self.steepness_coefficient = steepness_coefficient
-        self.skip_prefill_compression = skip_prefill_compression
         self.num_transformer_blocks = num_transformer_blocks
         self.kv_seq_dim_idx = kv_seq_dim_idx
         self.all_local_windows = self.get_all_local_windows()
@@ -32,7 +31,7 @@ class SequenceKVCompressor:
             seq_len = past_key_values[layer_idx][0].size(self.kv_seq_dim_idx)
             current_uncompressed_window_length = seq_len - retention_window_start[layer_idx]
             if current_uncompressed_window_length > self.all_local_windows[layer_idx]:
-                if prefill and not self.skip_prefill_compression:
+                if prefill:
                     new_keys = self.compress_prefill(past_key_values[layer_idx][0],
                                                      retention_window_start[layer_idx], layer_idx)
                     new_values = self.compress_prefill(past_key_values[layer_idx][1],

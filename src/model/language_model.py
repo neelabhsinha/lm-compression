@@ -6,7 +6,7 @@ from src.compression.sequence_kv_compress import SequenceKVCompressor
 
 
 class LanguageModel:
-    def __init__(self, model_name, sink_tokens, initial_local_window, steepness_coefficient, skip_prefill_compression,
+    def __init__(self, model_name, sink_tokens, initial_local_window, steepness_coefficient,
                  sequence_pooling_type, kv_seq_dim=2):
         model_loader = HuggingFaceModel(model_name)
         self.model = model_loader.get_model()
@@ -18,8 +18,8 @@ class LanguageModel:
         self.num_transformer_blocks = self.model.config.num_hidden_layers
         self.initial_local_window = initial_local_window
         self.sequence_kv_compressor = SequenceKVCompressor(sink_tokens, sequence_pooling_type,
-                                                           initial_local_window, steepness_coefficient,
-                                                           skip_prefill_compression, self.num_transformer_blocks,
+                                                           initial_local_window, steepness_coefficient, 
+                                                           self.num_transformer_blocks,
                                                            kv_seq_dim)
 
     @torch.no_grad()
