@@ -36,8 +36,8 @@ class LanguageModel:
         attention_mask = tokenized_inputs["attention_mask"]
         past_key_values = None
         batch_size = input_ids.size(0)
-        if input_ids.size(1) > self.max_context_size:
-            half = input_ids.size(1) // 2
+        if input_ids.size(1) > self.max_context_size - max_length - 2:
+            half = (self.max_context_size - max_length - 2) // 2
             input_ids = torch.cat((input_ids[:, :half], input_ids[:, -half:]), dim=1)
             attention_mask = torch.cat((attention_mask[:, :half], attention_mask[:, -half:]), dim=1)
         output_tokens = torch.zeros(batch_size, 0).to(self.model.device)
