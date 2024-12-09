@@ -84,7 +84,8 @@ python3 main.py --model_name "meta-llama/Meta-Llama-3-8B-Instruct" \
     --batch_size 1 \
     --dataset_split "test" \
     --mode "user" \
-    --prompt "What is Machine Learning?"```
+    --prompt "What is Machine Learning?"
+```
 
 ## Example Usage
 To run the project with a Llama-3-8B-Instruct model, a greedy decoding strategy, and a specific configuration for local window compression:
