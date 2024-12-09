@@ -29,6 +29,10 @@ def get_args():
     parser.add_argument('--compress_context', action='store_true', help='Whether to compress the context.')
     parser.add_argument('--batch_size', type=int, default=4, help='Batch size for inference.')
     parser.add_argument('--dataset_split', type=str, default='test', help='Dataset split to be used.')
+    parser.add_argument('--mode', type=str, default='test', help='Mode in which you want to run. Enter user to provide custom input.')
+    parser.add_argument('--prompt', type=str, default='What is Machine Learning', help='User Defined Prompt')
+
+
 
     return parser.parse_args()
 
@@ -37,4 +41,4 @@ if __name__ == '__main__':
     configure_huggingface()
     args = get_args()
     execute(args.model_name, args.decoding_strategy, args.dataset_split, args.batch_size, args.sink_tokens,
-            args.initial_local_window, args.steepness_coefficient, args.seq_pooling_type, args.compress_context)
+            args.initial_local_window, args.steepness_coefficient, args.seq_pooling_type, args.compress_context, args.mode, args.prompt)
