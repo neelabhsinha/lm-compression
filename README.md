@@ -71,6 +71,21 @@ The following arguments can be passed to the script:
 | `--batch_size`         | `int`   | `4`                              | Batch size for inference.                                                                         |
 | `--dataset_split`      | `str`   | `test`                           | Dataset split to be used. Options: `train`, `validation`, `test`.                                 |
 
+## Example Demo
+This example demonstrates how to run this compression technique on a user-defined prompt.
+
+```bash
+python3 main.py --model_name "meta-llama/Meta-Llama-3-8B-Instruct" \
+    --decoding_strategy "greedy" \
+    --initial_local_window 128 \
+    --steepness_coefficient 1 \
+    --sink_tokens 4 \
+    --seq_pooling_type "mean" \
+    --batch_size 1 \
+    --dataset_split "test" \
+    --mode "user" \
+    --prompt "What is Machine Learning?"```
+
 ## Example Usage
 To run the project with a Llama-3-8B-Instruct model, a greedy decoding strategy, and a specific configuration for local window compression:
 
