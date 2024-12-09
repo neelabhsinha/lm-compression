@@ -1,5 +1,6 @@
 
-# Name TBD
+# Memory Reduction for LLM Inference via KV-Cache
+Compression
 
 This project provides an efficient method for compressing the key-value cache in transformer models to optimize memory usage and speed during inference. The key-value cache compression framework allows for more efficient generation by dynamically reducing the cache size while retaining critical context, making it ideal for deployment in memory-constrained environments.
 
